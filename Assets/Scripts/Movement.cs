@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Movement : MonoBehaviour
 {
@@ -43,14 +44,20 @@ public class Movement : MonoBehaviour
         _controls.Disable();
     }
 
-    void Resume()
+    public void Resume()
     {
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
     }
 
-    void Pause()
+    public void Pause()
     {
         Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        SceneManager.LoadScene("MenuScene");
     }
 
     private void Start()
@@ -87,6 +94,7 @@ public class Movement : MonoBehaviour
         if (_controls.Player.Run.IsPressed())
         {
             speed = 30;
+            CamShake.Instance.ShakeCam(10f,1f);
         }
         else
         {
@@ -133,6 +141,7 @@ public class Movement : MonoBehaviour
         if (_controls.Player.Run.IsPressed())
         {
             speed = 30;
+            CamShake.Instance.ShakeCam(10f,1f);
         }
         else
         {
