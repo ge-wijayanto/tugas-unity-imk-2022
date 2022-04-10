@@ -177,7 +177,7 @@ public class Movement : MonoBehaviour
     private void Move(Vector3 target)
     {
         _rb.MovePosition(target); 
-        //transform.position = target;
+        // transform.position = target;
     }
 
     private void RotateCharacter(Vector3 target)
