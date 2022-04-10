@@ -80,6 +80,15 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Dance"",
+                    ""type"": ""Button"",
+                    ""id"": ""ffe20272-67cc-47f6-9eae-593ae30f717e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -214,6 +223,17 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""action"": ""Resume"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1c681914-c00c-4784-b4f4-d1292ad4f5aa"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": ""Hold"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Dance"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -228,6 +248,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         m_Player_Resume = m_Player.FindAction("Resume", throwIfNotFound: true);
+        m_Player_Dance = m_Player.FindAction("Dance", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -293,6 +314,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Run;
     private readonly InputAction m_Player_Pause;
     private readonly InputAction m_Player_Resume;
+    private readonly InputAction m_Player_Dance;
     public struct PlayerActions
     {
         private @Controls m_Wrapper;
@@ -303,6 +325,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         public InputAction @Run => m_Wrapper.m_Player_Run;
         public InputAction @Pause => m_Wrapper.m_Player_Pause;
         public InputAction @Resume => m_Wrapper.m_Player_Resume;
+        public InputAction @Dance => m_Wrapper.m_Player_Dance;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -330,6 +353,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Resume.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnResume;
                 @Resume.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnResume;
                 @Resume.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnResume;
+                @Dance.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDance;
+                @Dance.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDance;
+                @Dance.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDance;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -352,6 +378,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Resume.started += instance.OnResume;
                 @Resume.performed += instance.OnResume;
                 @Resume.canceled += instance.OnResume;
+                @Dance.started += instance.OnDance;
+                @Dance.performed += instance.OnDance;
+                @Dance.canceled += instance.OnDance;
             }
         }
     }
@@ -364,5 +393,6 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         void OnRun(InputAction.CallbackContext context);
         void OnPause(InputAction.CallbackContext context);
         void OnResume(InputAction.CallbackContext context);
+        void OnDance(InputAction.CallbackContext context);
     }
 }

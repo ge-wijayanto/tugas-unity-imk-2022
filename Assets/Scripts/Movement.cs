@@ -3,12 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Cinemachine;
 
 public class Movement : MonoBehaviour
 {
-    [SerializeField] private int speed = 10;
+    private float speed;
+    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float runSpeed = 1.5f;
     [SerializeField] private bool usePhysics = true;
-    private float jumpSpeed = 5000f;
+    // [SerializeField] private CinemachineImpulseSource _impulseSource;
+    // private float jumpSpeed = 5000f;
     private bool canJump;
 
     private Camera _mainCamera;
@@ -16,6 +20,9 @@ public class Movement : MonoBehaviour
     private Controls _controls;
     private Animator _animator;
     private static readonly int IsWalking = Animator.StringToHash("isWalking");
+    private static readonly int IsRunning = Animator.StringToHash("isRunning");
+    private static readonly int isJumping = Animator.StringToHash("isJumping");
+    private static readonly int isDancing = Animator.StringToHash("isDancing");
 
     [SerializeField] GameObject stepRayUpper;
     [SerializeField] GameObject stepRayLower;
@@ -23,12 +30,13 @@ public class Movement : MonoBehaviour
     [SerializeField] float stepSmooth = 2f;
 
     public static bool GameIsPaused = false;   
+
     private void Awake()
     {
         _controls = new Controls();
-
         _rb = GetComponent<Rigidbody>();
 
+        //_impulseSource = GetComponent<CinemachineImpulseSource>();
         stepRayUpper.transform.position = new Vector3(stepRayUpper.transform.position.x, stepHeight, stepRayUpper.transform.position.z);
     }
 
@@ -49,7 +57,6 @@ public class Movement : MonoBehaviour
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
     }
 
     public void Pause()
@@ -62,6 +69,7 @@ public class Movement : MonoBehaviour
 
     private void Start()
     {
+        speed = walkSpeed;
         _mainCamera = Camera.main;
         _rb = gameObject.GetComponent<Rigidbody>();
         _animator = gameObject.GetComponentInChildren<Animator>();
@@ -69,49 +77,10 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
-        if (usePhysics)
-        {
-            return;
-        }
-
-        if (_controls.Player.Pause.IsPressed())
-        {
-            if (GameIsPaused)
-            {
-                Resume();
-            }
-            else
-            {
-                Pause();
-            }
-        }
-
-        if (_controls.Player.Jump.IsPressed() & canJump)
-        {
-            _rb.AddForce(1f, jumpSpeed * Time.deltaTime, 2f);
-        }
-
-        if (_controls.Player.Run.IsPressed())
-        {
-            speed = 30;
-            CamShake.Instance.ShakeCam(10f,1f);
-        }
-        else
-        {
-            speed = 10;
-        }
-
-        if (_controls.Player.Move.IsPressed())
-        {
-            _animator.SetBool(IsWalking, true);
-            Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
-            Vector3 target = HandleInput(input);
-            Move(target);
-        }
-        else
-        {
-            _animator.SetBool(IsWalking, false);
-        }
+        if (!_controls.Player.Move.IsPressed()) return;
+        Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
+        Vector3 target = HandleInput(input);
+        RotateCharacter(target);
     }
     
     private void FixedUpdate()
@@ -133,19 +102,45 @@ public class Movement : MonoBehaviour
             }
         }
 
-        if (_controls.Player.Jump.IsPressed() & canJump)
+        if (_controls.Player.Dance.IsPressed())
         {
-            _rb.AddForce(1f, jumpSpeed * Time.deltaTime, 2f);
-        }
-
-        if (_controls.Player.Run.IsPressed())
-        {
-            speed = 30;
-            CamShake.Instance.ShakeCam(10f,1f);
+            _animator.SetBool(isDancing, true);
         }
         else
         {
-            speed = 10;
+            _animator.SetBool(isDancing, false);
+        }
+
+        if (_controls.Player.Jump.IsPressed() & canJump)
+        {
+            // _rb.AddForce(1f, jumpSpeed * Time.deltaTime, 2f);
+            if (!_animator.GetBool(isJumping))
+            {
+                _animator.SetBool(isJumping, false);
+            }
+
+            Jump();
+        }
+
+        // if (_controls.Player.Dance.IsPressed())
+        // {
+        //     _animator.SetBool(isDancing, true);
+        // }
+        // else
+        // {
+        //     _animator.SetBool(IsDancing, false);
+        // }
+
+        if (_controls.Player.Run.IsPressed())
+        {
+            _animator.SetBool(IsRunning, true);
+            CamShake.Instance.ShakeCam(5f,1f);
+            speed = walkSpeed * runSpeed;
+        }
+        else
+        {
+            _animator.SetBool(IsRunning, false);
+            speed = walkSpeed;
         }
 
         if (_controls.Player.Move.IsPressed())
@@ -153,7 +148,7 @@ public class Movement : MonoBehaviour
             _animator.SetBool(IsWalking, true);
             Vector2 input = _controls.Player.Move.ReadValue<Vector2>();
             Vector3 target = HandleInput(input);
-            MovePhysics(target);
+            Move(target);
         }
         else
         {
@@ -181,7 +176,20 @@ public class Movement : MonoBehaviour
 
     private void Move(Vector3 target)
     {
-        transform.position = target;
+        _rb.MovePosition(target); 
+        //transform.position = target;
+    }
+
+    private void RotateCharacter(Vector3 target)
+    {
+        Vector3 lookAt = target - transform.position;
+        lookAt.y = 0;
+        transform.rotation = Quaternion.LookRotation(lookAt);
+    }
+
+    public void Jump()
+    {
+        _rb.AddForce(Vector3.up * 200);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -189,6 +197,7 @@ public class Movement : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             canJump = true;
+            _animator.SetBool(isJumping, false);
         }
     }
 
@@ -197,13 +206,14 @@ public class Movement : MonoBehaviour
         if (collision.gameObject.CompareTag("Floor"))
         {
             canJump = false;
+            _animator.SetBool(isJumping, true);
         }
     }
 
-    private void MovePhysics(Vector3 target)
-    {
-        _rb.MovePosition(target); 
-    }
+    // private void MovePhysics(Vector3 target)
+    // {
+    //     _animator.SetBool(isJumping, false);
+    // }
 
     void stepClimb()
     {
